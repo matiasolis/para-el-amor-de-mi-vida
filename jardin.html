@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>El Jardín Mágico de mi Amor</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+    
+    <script>
+        // Componente original optimizado para las flores
+        AFRAME.registerComponent('jardin-flores', {
+            schema: {
+                cantidadFlores: {type: 'number', default: 25000} 
+            },
+            init: function () {
+                this.generarFloresOptimizadas(this.data.cantidadFlores);
+            },
+            generarFloresOptimizadas: function (cant) {
+                const paleta = [0xff477e, 0xff7096, 0xff85a1, 0xf72585, 0x7209b7, 0xffffff, 0xff0044];
+                
+                const talloGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.5, 4);
+                const centroGeom = new THREE.SphereGeometry(0.04, 6, 6);
+                const petalosGeom = new THREE.SphereGeometry(0.12, 8, 8);
+
+                const talloMat = new THREE.MeshStandardMaterial({color: 0x1e4620, roughness: 0.9});
+                const centroMat = new THREE.MeshStandardMaterial({color: 0xffd000, roughness: 0.6});
+                const petalosMat = new THREE.MeshStandardMaterial({roughness: 0.4});
+
+                const talloMesh = new THREE.InstancedMesh(talloGeom, talloMat, cant);
+                const centroMesh = new THREE.InstancedMesh(centroGeom, centroMat, cant);
+                const petalosMesh = new THREE.InstancedMesh(petalosGeom, petalosMat, cant);
+
+                talloMesh.castShadow = true;
+                centroMesh.castShadow = true;
+                petalosMesh.castShadow = true;
+
+                const dummy = new THREE.Object3D();
+                
+                for (let i = 0; i < cant; i++) {
+                    const r = Math.sqrt(Math.random()) * 85; 
+                    const theta = Math.random() * Math.PI * 2;
+                    const x = r * Math.cos(theta);
+                    const z = r * Math.sin(theta);
+
+                    if (Math.abs(x) < 2.5 && Math.abs(z) < 6) continue;
+
+                    dummy.position.set(x, 0.25, z);
+                    dummy.scale.set(1, 1, 1);
+                    dummy.rotation.set((Math.random() - 0.5) * 0.2, 0, (Math.random() - 0.5) * 0.2);
+                    dummy.updateMatrix();
+                    talloMesh.setMatrixAt(i, dummy.matrix);
+
+                    dummy.position.set(x, 0.5, z);
+                    dummy.scale.set(1, 1, 1);
+                    dummy.rotation.set(0, 0, 0);
+                    dummy.updateMatrix();
+                    centroMesh.setMatrixAt(i, dummy.matrix);
+
+                    dummy.position.set(x, 0.5, z);
+                    dummy.scale.set(1.8, 0.25, 1.8); 
+                    dummy.updateMatrix();
+                    petalosMesh.setMatrixAt(i, dummy.matrix);
+
+                    const colorEscogido = new THREE.Color(paleta[Math.floor(Math.random() * paleta.length)]);
+                    petalosMesh.setColorAt(i, colorEscogido);
+                }
+
+                talloMesh.instanceMatrix.needsUpdate = true;
+                centroMesh.instanceMatrix.needsUpdate = true;
+                petalosMesh.instanceMatrix.needsUpdate = true;
+                petalosMesh.instanceColor.needsUpdate = true;
+
+                this.el.object3D.add(talloMesh);
+                this.el.object3D.add(centroMesh);
+                this.el.object3D.add(petalosMesh);
+            }
+        });
+
+        // Nuevo componente para generar luciérnagas flotantes mágicas
+        AFRAME.registerComponent('luciernagas', {
+            schema: { cantidad: {type: 'number', default: 60} },
+            init: function () {
+                for (let i = 0; i < this.data.cantidad; i++) {
+                    let luz = document.createElement('a-sphere');
+                    
+                    // Distribución aleatoria en el espacio cercano
+                    let x = (Math.random() - 0.5) * 35;
+                    let y = Math.random() * 5 + 0.5;
+                    let z = (Math.random() - 0.5) * 35;
+                    
+                    luz.setAttribute('position', `${x} ${y} ${z}`);
+                    luz.setAttribute('radius', '0.03');
+                    luz.setAttribute('color', '#fffda1');
+                    luz.setAttribute('material', 'shader: flat; opacity: 0.8');
+                    
+                    // Animación de movimiento suave (flotado)
+                    let toY = y + (Math.random() - 0.5) * 1.5;
+                    let toX = x + (Math.random() - 0.5) * 1.5;
+                    let duracion = 3000 + Math.random() * 3000;
+                    
+                    luz.setAttribute('animation__pos', {
+                        property: 'position',
+                        to: `${toX} ${toY} ${z}`,
+                        dur: duracion,
+                        easing: 'easeInOutSine',
+                        loop: true,
+                        dir: 'alternate'
+                    });
+
+                    // Animación de parpadeo sutil
+                    luz.setAttribute('animation__fade', {
+                        property: 'material.opacity',
+                        from: 0.2,
+                        to: 0.9,
+                        dur: 1000 + Math.random() * 1500,
+                        easing: 'easeInOutSine',
+                        loop: true,
+                        dir: 'alternate'
+                    });
+                    
+                    this.el.appendChild(luz);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <a-scene fog="type: exponential; color: #cfe2ff; density: 0.012" shadow="type: pcfsoft">
+        
+        <a-entity environment="preset: dream; dressing: none; skyType: gradient; skyColor: #6ba4ff; horizonColor: #cfe2ff; groundColor: #348a27; groundColor2: #24611b; groundTexture: walkernoise; groundYScale: 3; lighting: none"></a-entity>
+
+        <a-light type="ambient" color="#ffffff" intensity="0.7"></a-light>
+        <a-light type="directional" color="#fffbe0" intensity="0.8" position="20 40 -20" castShadow="true"></a-light>
+
+        <a-sphere position="30 45 -45" radius="5" color="#fffda1" material="shader: flat" shadow="cast: false"></a-sphere>
+
+        <a-sound src="puesto.mp3" autoplay="true" loop="true" volume="0.6" position="0 2 0"></a-sound>
+
+        <a-entity position="0 1.6 0">
+            <a-camera look-controls wasd-controls="acceleration: 130"></a-camera>
+        </a-entity>
+
+        <a-entity position="-15 25 -35" scale="1.5 1.5 1.5"
+                  animation="property: position; to: -10 25 -33; dur: 25000; easing: easeInOutSine; loop: true; dir: alternate">
+            <a-sphere position="0 0 0" radius="3" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="2 0.5 0" radius="2.2" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="-2 0.2 0" radius="2" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="0.8 1.2 0" radius="2.4" color="#fff" material="roughness: 0.9"></a-sphere>
+        </a-entity>
+
+        <a-entity position="25 28 -20" scale="2 2 2"
+                  animation="property: position; to: 20 28 -22; dur: 30000; easing: easeInOutSine; loop: true; dir: alternate">
+            <a-sphere position="0 0 0" radius="3" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="2.2 0.3 0" radius="2" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="-1.8 -0.2 0" radius="2.2" color="#fff" material="roughness: 0.9"></a-sphere>
+        </a-entity>
+
+        <a-entity position="-30 22 10" scale="1.8 1.8 1.8"
+                  animation="property: position; to: -26 22 12; dur: 28000; easing: easeInOutSine; loop: true; dir: alternate">
+            <a-sphere position="0 0 0" radius="3" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="2 0.2 0" radius="2.1" color="#fff" material="roughness: 0.9"></a-sphere>
+            <a-sphere position="-2 0.1 0" radius="2" color="#fff" material="roughness: 0.9"></a-sphere>
+        </a-entity>
+
+        <a-entity position="0 3.2 -5.5" scale="0.9 0.9 0.9"
+                  animation="property: position; to: 0 3.5 -5.5; dur: 2500; easing: easeInOutSine; loop: true; dir: alternate">
+            
+            <a-entity>
+                <a-sphere position="-0.65 0.5 0" radius="0.9" color="#ff2a6d" material="roughness: 0.6; emissive: #ff2a6d; emissiveIntensity: 0.2"></a-sphere>
+                <a-sphere position="0.65 0.5 0" radius="0.9" color="#ff2a6d" material="roughness: 0.6; emissive: #ff2a6d; emissiveIntensity: 0.2"></a-sphere>
+                <a-cone position="0 -0.45 0" radius-bottom="1.23" radius-top="0.01" height="2.2" rotation="180 0 0" color="#ff2a6d" material="roughness: 0.6; emissive: #ff2a6d; emissiveIntensity: 0.2"></a-cone>
+            </a-entity>
+
+            <a-light type="point" color="#ff7096" intensity="0.8" distance="7" position="0 0 0.5"></a-light>
+
+            <a-text value="Mi amor, te amo tanto que\nlas palabras se quedan cortas\ny solo quiero que mi corazón\nsea tuyo.\n\nSos tan hermosa\ncomo este jardín." 
+                    align="center" 
+                    color="#ffffff" 
+                    width="4.8" 
+                    position="0 0.1 0.65"
+                    font="roboto"
+                    shader="msdf">
+            </a-text>
+        </a-entity>
+
+        <a-entity id="jardin" jardin-flores="cantidadFlores: 25000"></a-entity>
+        <a-entity id="magia" luciernagas="cantidad: 70"></a-entity>
+
+    </a-scene>
+</body>
+</html>
